@@ -1,0 +1,90 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+# Prevent concurrent deploys — queue them instead of canceling
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  # Run CI checks first — deploy only if they pass
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npx vitest run
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to detect container changes
+
+      - name: Check if container rebuild is needed
+        id: container_check
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -qE '^container/'; then
+            echo "rebuild=true" >> $GITHUB_OUTPUT
+          else
+            echo "rebuild=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          REBUILD_CONTAINER: ${{ steps.container_check.outputs.rebuild }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: REBUILD_CONTAINER
+          # Timeout: allow up to 10 min for container rebuild
+          command_timeout: 10m
+          script: |
+            set -e
+            cd ~/nanoclaw
+
+            echo "==> Pulling latest code..."
+            git pull origin main
+
+            echo "==> Installing dependencies..."
+            npm ci
+
+            echo "==> Building TypeScript..."
+            npm run build
+
+            if [ "$REBUILD_CONTAINER" = "true" ]; then
+              echo "==> Rebuilding agent container (container/ files changed)..."
+              ./container/build.sh
+            else
+              echo "==> Skipping container rebuild (no container/ changes)"
+            fi
+
+            echo "==> Restarting nanoclaw service..."
+            systemctl --user restart nanoclaw
+
+            echo "==> Waiting for service to stabilize..."
+            sleep 3
+            systemctl --user status nanoclaw --no-pager --lines=10
+
+            echo "==> Deploy complete"
