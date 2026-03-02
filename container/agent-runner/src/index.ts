@@ -361,6 +361,7 @@ async function runQuery(
   containerInput: ContainerInput,
   sdkEnv: Record<string, string | undefined>,
   resumeAt?: string,
+  model?: string,
 ): Promise<{ newSessionId?: string; lastAssistantUuid?: string; closedDuringQuery: boolean }> {
   const stream = new MessageStream();
   stream.push(prompt);
@@ -434,6 +435,7 @@ async function runQuery(
         'NotebookEdit',
         'mcp__nanoclaw__*'
       ],
+      model,
       env: sdkEnv,
       permissionMode: 'bypassPermissions',
       allowDangerouslySkipPermissions: true,
@@ -535,13 +537,29 @@ async function main(): Promise<void> {
     prompt += '\n' + pending.join('\n');
   }
 
+  // Model override: agent can write to /workspace/group/.model to switch models
+  // between query iterations. File should contain a model alias (e.g. "haiku", "sonnet", "opus")
+  // or a full model name (e.g. "claude-sonnet-4-6").
+  const MODEL_FILE = '/workspace/group/.model';
+  function readModelOverride(): string | undefined {
+    try {
+      const content = fs.readFileSync(MODEL_FILE, 'utf-8').trim();
+      if (content) {
+        log(`Model override from .model file: ${content}`);
+        return content;
+      }
+    } catch { /* file doesn't exist, use default */ }
+    return undefined;
+  }
+
   // Query loop: run query → wait for IPC message → run new query → repeat
   let resumeAt: string | undefined;
   try {
     while (true) {
-      log(`Starting query (session: ${sessionId || 'new'}, resumeAt: ${resumeAt || 'latest'})...`);
+      const model = readModelOverride();
+      log(`Starting query (session: ${sessionId || 'new'}, resumeAt: ${resumeAt || 'latest'}, model: ${model || 'default'})...`);
 
-      const queryResult = await runQuery(prompt, sessionId, mcpServerPath, containerInput, sdkEnv, resumeAt);
+      const queryResult = await runQuery(prompt, sessionId, mcpServerPath, containerInput, sdkEnv, resumeAt, model);
       if (queryResult.newSessionId) {
         sessionId = queryResult.newSessionId;
       }
