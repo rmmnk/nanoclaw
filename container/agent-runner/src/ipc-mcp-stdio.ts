@@ -280,6 +280,85 @@ Use available_groups.json to find the JID for a group. The folder name should be
   },
 );
 
+// ---------------------------------------------------------------------------
+// Slack Web API — generic tool that lets the agent call any Slack method.
+// Only registered when SLACK_BOT_TOKEN is available in the environment.
+// ---------------------------------------------------------------------------
+const slackToken = process.env.SLACK_BOT_TOKEN;
+
+if (slackToken) {
+  server.tool(
+    'slack_api',
+    `Call any Slack Web API method. See https://api.slack.com/methods for the full list.
+
+Common methods:
+• reactions.add — React to a message: { channel, name, timestamp }
+• reactions.remove — Remove a reaction: { channel, name, timestamp }
+• pins.add — Pin a message: { channel, timestamp }
+• pins.remove — Unpin a message: { channel, timestamp }
+• chat.update — Edit a message: { channel, ts, text }
+• chat.delete — Delete a message: { channel, ts }
+• conversations.history — Get channel messages: { channel, limit }
+• conversations.setTopic — Set channel topic: { channel, topic }
+• conversations.setPurpose — Set channel purpose: { channel, purpose }
+• conversations.create — Create a channel: { name, is_private }
+• conversations.invite — Invite users: { channel, users }
+• conversations.list — List channels: { types, limit }
+• users.list — List workspace users: { limit }
+• users.info — Get user info: { user }
+• files.uploadV2 — Upload a file: { channel_id, content, filename, title }
+• bookmarks.add — Add a bookmark: { channel_id, title, type, link }
+• search.messages — Search messages: { query }
+• chat.postMessage — Send with blocks/threads: { channel, text, thread_ts, blocks }
+
+The "channel" parameter for most methods is the channel ID (e.g., "C0AHNK1F5NJ"), not the JID.
+For the current channel, strip the "slack:" prefix from your chat JID.`,
+    {
+      method: z.string().describe('Slack API method (e.g., "reactions.add", "conversations.history")'),
+      params: z.string().default('{}').describe('JSON string of method parameters (e.g., \'{"channel":"C0AHNK1F5NJ","name":"thumbsup","timestamp":"1234567890.123456"}\')'),
+    },
+    async (args) => {
+      try {
+        const params = JSON.parse(args.params);
+        const url = `https://slack.com/api/${args.method}`;
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${slackToken}`,
+            'Content-Type': 'application/json; charset=utf-8',
+          },
+          body: JSON.stringify(params),
+        });
+
+        const result = await response.json() as { ok: boolean; error?: string; [key: string]: unknown };
+
+        if (!result.ok) {
+          return {
+            content: [{ type: 'text' as const, text: `Slack API error: ${result.error || 'unknown error'}` }],
+            isError: true,
+          };
+        }
+
+        // Truncate large responses to avoid flooding context
+        const resultStr = JSON.stringify(result, null, 2);
+        const truncated = resultStr.length > 4000
+          ? resultStr.slice(0, 4000) + '\n... (truncated)'
+          : resultStr;
+
+        return {
+          content: [{ type: 'text' as const, text: truncated }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+}
+
 // Start the stdio transport
 const transport = new StdioServerTransport();
 await server.connect(transport);

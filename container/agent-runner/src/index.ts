@@ -448,6 +448,8 @@ async function runQuery(
             NANOCLAW_CHAT_JID: containerInput.chatJid,
             NANOCLAW_GROUP_FOLDER: containerInput.groupFolder,
             NANOCLAW_IS_MAIN: containerInput.isMain ? '1' : '0',
+            // Pass channel tokens so the MCP server can call APIs directly
+            ...(sdkEnv.SLACK_BOT_TOKEN ? { SLACK_BOT_TOKEN: sdkEnv.SLACK_BOT_TOKEN } : {}),
           },
         },
       },
