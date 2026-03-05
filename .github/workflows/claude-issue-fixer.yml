@@ -36,5 +36,5 @@ jobs:
             3. Commit your changes with a descriptive message referencing the issue
             4. Push to a new branch
             5. The system will create a PR automatically
-          claude_args: "--model claude-sonnet-4-6 --max-turns 20"
+          claude_args: "--model claude-sonnet-4-6 --max-turns 20 --dangerously-skip-permissions"
           show_full_output: true
