@@ -19,15 +19,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
-            Fix the following GitHub issue. Read the issue title and body carefully.
-            Make the minimal code changes needed. Create a PR with the fix.
+            You are fixing a GitHub issue. Read the issue carefully and make the code changes needed.
 
             Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}
 
             ${{ github.event.issue.body }}
+
+            Instructions:
+            1. Read the relevant files
+            2. Make the minimal changes needed
+            3. Commit your changes with a descriptive message referencing the issue
+            4. Push to a new branch
+            5. The system will create a PR automatically
           claude_args: "--model claude-sonnet-4-6 --max-turns 20"
+          show_full_output: true
