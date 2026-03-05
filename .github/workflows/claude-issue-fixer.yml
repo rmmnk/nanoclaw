@@ -7,7 +7,9 @@ on:
 jobs:
   fix-issue:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'claude')
+    if: |
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'claude'
     timeout-minutes: 15
     permissions:
       contents: write
@@ -15,6 +17,9 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -25,4 +30,4 @@ jobs:
             Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}
 
             ${{ github.event.issue.body }}
-          claude_args: "--model claude-sonnet-4-6 --max-turns 10"
+          claude_args: "--model claude-sonnet-4-6 --max-turns 20"
