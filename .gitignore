@@ -26,4 +26,7 @@ groups/
 # Skills system (local per-installation state)
 .nanoclaw/
 
+# Claude Code local settings (contains approved commands, VPS paths)
+.claude/settings.json
+
 agents-sdk-docs
