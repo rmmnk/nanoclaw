@@ -1,0 +1,39 @@
+version: 2
+updates:
+  # npm dependencies (root)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    groups:
+      # Group minor/patch updates into a single PR
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # npm dependencies (agent-runner inside container)
+  - package-ecosystem: "npm"
+    directory: "/container/agent-runner"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "container"
+
+  # GitHub Actions versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ci"
