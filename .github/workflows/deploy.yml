@@ -87,4 +87,8 @@ jobs:
             sleep 3
             systemctl --user status nanoclaw --no-pager --lines=10
 
+            echo "==> Syncing to private agents repo..."
+            cd ~/nanoclaw/groups
+            bash ~/nanoclaw/scripts/sync-agents.sh || echo "WARN: agents sync failed (non-fatal)"
+
             echo "==> Deploy complete"
