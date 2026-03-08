@@ -311,11 +311,11 @@ Common methods:
 • search.messages — Search messages: { query }
 • chat.postMessage — Send with blocks/threads: { channel, text, thread_ts, blocks }
 
-The "channel" parameter for most methods is the channel ID (e.g., "C0AHNK1F5NJ"), not the JID.
+The "channel" parameter for most methods is the channel ID (e.g., "C0123456789"), not the JID.
 For the current channel, strip the "slack:" prefix from your chat JID.`,
     {
       method: z.string().describe('Slack API method (e.g., "reactions.add", "conversations.history")'),
-      params: z.string().default('{}').describe('JSON string of method parameters (e.g., \'{"channel":"C0AHNK1F5NJ","name":"thumbsup","timestamp":"1234567890.123456"}\')'),
+      params: z.string().default('{}').describe('JSON string of method parameters (e.g., \'{"channel":"C0123456789","name":"thumbsup","timestamp":"1234567890.123456"}\')'),
     },
     async (args) => {
       try {
