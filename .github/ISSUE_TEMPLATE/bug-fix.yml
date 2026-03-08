@@ -1,0 +1,28 @@
+name: Bug Fix
+description: Report a bug for Claude to fix automatically
+labels: ["bug", "claude"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What's broken?
+      description: Describe the bug. Be specific about what you expected vs what happened.
+      placeholder: "Sara crashes when..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce
+      description: Steps to trigger the bug (optional but helpful)
+      placeholder: "1. Send a message to Sara\n2. ..."
+    validations:
+      required: false
+  - type: textarea
+    id: files
+    attributes:
+      label: Relevant files
+      description: List any files you know are involved (optional)
+      placeholder: "src/index.ts, src/container-runner.ts"
+    validations:
+      required: false
