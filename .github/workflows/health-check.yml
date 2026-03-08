@@ -99,14 +99,17 @@ jobs:
       - name: Notify Slack on failure
         if: failure()
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: SLACK_CHANNEL
           command_timeout: 10s
           script: |
             SLACK_TOKEN=$(grep SLACK_BOT_TOKEN ~/nanoclaw/.env | cut -d= -f2)
-            CHANNEL="C0AHNK1F5NJ"
+            CHANNEL="${SLACK_CHANNEL}"
             curl -s -X POST https://slack.com/api/chat.postMessage \
               -H "Authorization: Bearer $SLACK_TOKEN" \
               -H "Content-Type: application/json" \

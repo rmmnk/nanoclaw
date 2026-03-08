@@ -73,7 +73,7 @@ jobs:
       - name: Send to Slack
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL: C0AHNK1F5NJ
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
         run: |
           cd rainbow-trader
           python send_slack.py /tmp/rainbow_report.txt /tmp/rainbow_charts
