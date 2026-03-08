@@ -53,13 +53,13 @@ jobs:
 
       - name: Generate charts
         env:
-          CHART_OUTPUT_DIR: ./rainbow-trader/charts
+          CHART_OUTPUT_DIR: /tmp/rainbow_charts
         run: |
           cd rainbow-trader
-          mkdir -p charts
+          mkdir -p /tmp/rainbow_charts
           cat /tmp/rainbow_data.json | python rainbow_charts.py
           echo "Charts generated:"
-          ls -la charts/
+          ls -la /tmp/rainbow_charts/
 
       - name: Generate Claude report
         env:
@@ -76,5 +76,5 @@ jobs:
           SLACK_CHANNEL: C0AHNK1F5NJ
         run: |
           cd rainbow-trader
-          python send_slack.py /tmp/rainbow_report.txt ./charts
+          python send_slack.py /tmp/rainbow_report.txt /tmp/rainbow_charts
           echo "Sent to Slack"
